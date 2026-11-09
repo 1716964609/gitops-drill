@@ -4,5 +4,5 @@ image:                          # container image settings
   tag: "1.27"                   # image tag
 html: "<h1>hello from helm</h1>"  # page content placed in the ConfigMap
 ingress:                        # Ingress settings
-  enabled: false                 # whether to create the Ingress
+  enabled: true                 # whether to create the Ingress
   host: web.local               # hostname to route
