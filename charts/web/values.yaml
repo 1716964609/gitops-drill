@@ -1,4 +1,4 @@
-replicaCount: 1                 # number of pods
+replicaCount: 4                 # number of pods
 image:                          # container image settings
   repository: nginx             # image name
   tag: "1.27"                   # image tag
