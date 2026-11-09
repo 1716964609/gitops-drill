@@ -1,7 +1,7 @@
 replicaCount: 4                 # number of pods
 image:                          # container image settings
   repository: nginx             # image name
-  tag: "1.27"                   # image tag
+  tag: "1.99"                   # image tag
 html: "<h1>hello from helm</h1>"  # page content placed in the ConfigMap
 ingress:                        # Ingress settings
   enabled: true                 # whether to create the Ingress
