@@ -1,0 +1,30 @@
+apiVersion: apps/v1                           # apps API group
+kind: Deployment                              # manages ReplicaSets and rollouts
+metadata:                                     # object identity
+  name: {{ .Release.Name }}                   # named after the release
+spec:                                         # desired state
+  replicas: {{ .Values.replicaCount }}        # from values.yaml
+  selector:                                   # how the Deployment finds pods
+    matchLabels:                              # match by labels
+      app: {{ .Release.Name }}                # label value per release
+  template:                                   # pod blueprint
+    metadata:                                 # pod metadata
+      labels:                                 # labels on each pod
+        app: {{ .Release.Name }}              # must match the selector
+    spec:                                     # pod spec
+      containers:                             # containers in the pod
+      - name: nginx                           # container name
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"  # image built from values
+        ports:                                # exposed ports
+        - containerPort: 80                   # nginx listens on 80
+        volumeMounts:                         # mounted volumes
+        - name: html                          # volume defined below
+          mountPath: /usr/share/nginx/html    # nginx web root
+        readinessProbe:                       # gate for receiving traffic
+          httpGet:                            # check with HTTP
+            path: /                           # path checked
+            port: 80                          # port checked
+      volumes:                                # volumes for this pod
+      - name: html                            # volume name
+        configMap:                            # backed by a ConfigMap
+          name: {{ .Release.Name }}-config    # the ConfigMap from this chart

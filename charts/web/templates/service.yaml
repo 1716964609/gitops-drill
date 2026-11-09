@@ -1,0 +1,10 @@
+apiVersion: v1                                # core API group
+kind: Service                                 # stable endpoint for the pods
+metadata:                                     # object identity
+  name: {{ .Release.Name }}                   # named after the release
+spec:                                         # desired state
+  selector:                                   # which pods receive traffic
+    app: {{ .Release.Name }}                  # same label as the pods
+  ports:                                      # exposed ports
+  - port: 80                                  # port on the Service
+    targetPort: 80                            # port on the container

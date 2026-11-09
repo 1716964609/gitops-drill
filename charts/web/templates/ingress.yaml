@@ -1,0 +1,19 @@
+{{- if .Values.ingress.enabled }}             # render only when enabled
+apiVersion: networking.k8s.io/v1              # Ingress API group
+kind: Ingress                                 # HTTP routing rule
+metadata:                                     # object identity
+  name: {{ .Release.Name }}                   # named after the release
+spec:                                         # desired state
+  ingressClassName: traefik                   # handled by the Traefik controller
+  rules:                                      # routing rules
+  - host: {{ .Values.ingress.host }}          # match this Host header
+    http:                                     # HTTP routing
+      paths:                                  # list of paths
+      - path: /                               # everything under /
+        pathType: Prefix                      # prefix match
+        backend:                              # where traffic goes
+          service:                            # to a Service
+            name: {{ .Release.Name }}         # this chart's Service
+            port:                             # on this port
+              number: 80                      # Service port 80
+{{- end }}                                    # end of the condition
