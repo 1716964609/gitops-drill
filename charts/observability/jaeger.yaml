@@ -1,0 +1,35 @@
+apiVersion: apps/v1                         # apps API group
+kind: Deployment                            # runs the Jaeger pod
+metadata:                                   # object identity
+  name: jaeger                              # Deployment name
+  namespace: observability                  # lives in the observability namespace
+spec:                                       # desired state
+  replicas: 1                               # one instance (in-memory storage)
+  selector:                                 # how pods are found
+    matchLabels:                            # match by labels
+      app: jaeger                           # pod label
+  template:                                 # pod blueprint
+    metadata:                               # pod metadata
+      labels:                               # pod labels
+        app: jaeger                         # must match the selector
+    spec:                                   # pod spec
+      containers:                           # containers in the pod
+      - name: jaeger                        # container name
+        image: jaegertracing/jaeger:2.5.0   # Jaeger v2, pinned (your guardrail rejects :latest too)
+        ports:                              # exposed ports
+        - containerPort: 4317               # OTLP gRPC receiver
+        - containerPort: 16686              # web UI
+---                                         # next object in the same file
+apiVersion: v1                              # core API group
+kind: Service                               # stable address for Jaeger
+metadata:                                   # object identity
+  name: jaeger                              # DNS name: jaeger.observability
+  namespace: observability                  # same namespace
+spec:                                       # desired state
+  selector:                                 # which pods receive traffic
+    app: jaeger                             # the Jaeger pod
+  ports:                                    # exposed ports
+  - name: otlp-grpc                         # port for incoming spans
+    port: 4317                              # the collector sends here
+  - name: ui                                # port for the browser
+    port: 16686                             # Jaeger UI

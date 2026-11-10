@@ -1,0 +1,73 @@
+apiVersion: v1                                  # core API group
+kind: ConfigMap                                 # holds the collector's config file
+metadata:                                       # object identity
+  name: otel-collector-config                   # referenced by the Deployment
+  namespace: observability                      # same namespace
+data:                                           # file contents
+  config.yaml: |                                # the collector reads this file
+    receivers:                                  # where data comes in
+      otlp:                                     # OpenTelemetry protocol
+        protocols:                              # accepted transports
+          grpc:                                 # gRPC transport (Istio uses this)
+            endpoint: 0.0.0.0:4317              # listen on all interfaces
+          http:                                 # HTTP transport (your Node SDKs used this)
+            endpoint: 0.0.0.0:4318              # listen on all interfaces
+    processors:                                 # steps applied in between
+      batch: {}                                 # group spans before sending
+    exporters:                                  # where data goes out
+      otlp/jaeger:                              # an OTLP exporter named "jaeger"
+        endpoint: jaeger.observability.svc.cluster.local:4317  # Jaeger's OTLP port
+        tls:                                    # TLS settings
+          insecure: true                        # plain text inside the cluster
+      debug:                                    # print summaries to the pod log
+        verbosity: basic                        # one line per batch
+    service:                                    # what actually runs
+      pipelines:                                # data pipelines
+        traces:                                 # the traces pipeline
+          receivers: [otlp]                     # take spans from OTLP
+          processors: [batch]                   # batch them
+          exporters: [otlp/jaeger, debug]       # send to Jaeger and to the log
+---                                             # next object
+apiVersion: apps/v1                             # apps API group
+kind: Deployment                                # runs the collector
+metadata:                                       # object identity
+  name: otel-collector                          # Deployment name
+  namespace: observability                      # same namespace
+spec:                                           # desired state
+  replicas: 1                                   # one instance
+  selector:                                     # how pods are found
+    matchLabels:                                # match by labels
+      app: otel-collector                       # pod label
+  template:                                     # pod blueprint
+    metadata:                                   # pod metadata
+      labels:                                   # pod labels
+        app: otel-collector                     # must match the selector
+    spec:                                       # pod spec
+      containers:                               # containers in the pod
+      - name: collector                         # container name
+        image: otel/opentelemetry-collector:0.120.0  # core distribution, pinned
+        args: ["--config=/etc/otelcol/config.yaml"]  # which config file to load
+        ports:                                  # exposed ports
+        - containerPort: 4317                   # OTLP gRPC
+        - containerPort: 4318                   # OTLP HTTP
+        volumeMounts:                           # mounted volumes
+        - name: config                          # volume defined below
+          mountPath: /etc/otelcol               # where config.yaml appears
+      volumes:                                  # volumes for this pod
+      - name: config                            # volume name
+        configMap:                              # filled from a ConfigMap
+          name: otel-collector-config           # the ConfigMap above
+---                                             # next object
+apiVersion: v1                                  # core API group
+kind: Service                                   # stable address for the collector
+metadata:                                       # object identity
+  name: otel-collector                          # DNS name: otel-collector.observability
+  namespace: observability                      # same namespace
+spec:                                           # desired state
+  selector:                                     # which pods receive traffic
+    app: otel-collector                         # the collector pod
+  ports:                                        # exposed ports
+  - name: otlp-grpc                             # gRPC port
+    port: 4317                                  # Istio sends spans here
+  - name: otlp-http                             # HTTP port
+    port: 4318                                  # app SDKs can send here

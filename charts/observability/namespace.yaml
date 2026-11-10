@@ -1,0 +1,4 @@
+apiVersion: v1                    # core API group
+kind: Namespace                   # a namespace object
+metadata:                         # object identity
+  name: observability             # namespace for the tracing backend
