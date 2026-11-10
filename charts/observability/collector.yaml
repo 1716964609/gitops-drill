@@ -67,7 +67,7 @@ spec:                                           # desired state
   selector:                                     # which pods receive traffic
     app: otel-collector                         # the collector pod
   ports:                                        # exposed ports
-  - name: otlp-grpc                             # gRPC port
+  - name: grpc-otlp                             # gRPC port
     port: 4317                                  # Istio sends spans here
-  - name: otlp-http                             # HTTP port
+  - name: http-otlp                             # HTTP port
     port: 4318                                  # app SDKs can send here
